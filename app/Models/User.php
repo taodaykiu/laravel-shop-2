@@ -34,6 +34,11 @@ class User extends Authenticatable
                     ->orderBy('user_favorite_products.created_at', 'desc');
     }
 
+    public function cartItem()
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
     /**
      * The attributes that should be hidden for arrays.
      *
