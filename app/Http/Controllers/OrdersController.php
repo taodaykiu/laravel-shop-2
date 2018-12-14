@@ -85,4 +85,9 @@ class OrdersController extends Controller
 
         return view('orders.index',compact('orders'));
     }
+
+    public function show(Order $order,Request $request)
+    {
+        return view('orders.show',['order' =>$order->load(['items.product','items.productSku'])]);
+    }
 }
