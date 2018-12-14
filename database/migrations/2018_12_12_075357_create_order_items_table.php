@@ -1,9 +1,7 @@
 <?php
-
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-
 class CreateOrderItemsTable extends Migration
 {
     /**
@@ -28,7 +26,6 @@ class CreateOrderItemsTable extends Migration
             $table->timestamp('reviewed_at')->nullable();
         });
     }
-
     /**
      * Reverse the migrations.
      *
