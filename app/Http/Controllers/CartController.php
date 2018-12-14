@@ -17,7 +17,7 @@ class CartController extends Controller
         $amount = $request->input('amount');
 
         // 从数据库中查询该商品是否已经在购物车中
-        if ($cart = $user->cartItem()->where('product_sku_id', $skuId)->first()) {
+        if ($cart = $user->cartItems()->where('product_sku_id', $skuId)->first()) {
             // 如果存在则直接叠加商品数量
             $cart->update([
                               'amount' => $cart->amount + $amount,
@@ -43,7 +43,7 @@ class CartController extends Controller
 
     public function remove(ProductSku $sku,Request $request)
     {
-        $request->user()->cartItem()->where('product_sku_id',$sku->id)->delete();
+        $request->user()->cartItems()->where('product_sku_id',$sku->id)->delete();
 
         return [];
     }
