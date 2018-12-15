@@ -33,6 +33,7 @@ class OrdersController extends Controller
 
     public function show(Order $order,Request $request)
     {
+        $this->authorize('own', $order);
         // load 延迟预加载 通常在返回一条 Order 使用
         return view('orders.show',['order' =>$order->load(['items.product','items.productSku'])]);
     }
