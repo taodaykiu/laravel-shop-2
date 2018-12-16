@@ -333,6 +333,10 @@ body {
 }
 
 .orders-show-page {
+  .payment-buttons, .receive-button {
+    margin-top: 10px;
+    padding-right: 10px;
+  }
   font-size: 12px;
   .vertical-middle {
     vertical-align: middle;
