@@ -24,23 +24,20 @@ class OrdersController extends Controller
     {
         return $content
             ->header('订单列表')
-            ->description('description')
             ->body($this->grid());
     }
 
+
     /**
-     * Show interface.
-     *
-     * @param mixed   $id
+     * @param Order $order
      * @param Content $content
      * @return Content
      */
-    public function show($id, Content $content)
+    public function show(Order $order, Content $content)
     {
         return $content
-            ->header('Detail')
-            ->description('description')
-            ->body($this->detail($id));
+            ->header('查看订单')
+            ->body(view('admin.orders.show',['order' => $order]));
     }
 
     /**
