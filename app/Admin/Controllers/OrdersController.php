@@ -3,14 +3,15 @@
 namespace App\Admin\Controllers;
 
 use App\Exceptions\InvalidRequestException;
-use App\Models\Order;
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use Encore\Admin\Controllers\HasResourceActions;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Layout\Content;
 use Encore\Admin\Show;
 use Illuminate\Http\Request;
+use App\Http\Requests\Admin\HandleRefundRequest;
 
 class OrdersController extends Controller
 {
@@ -39,33 +40,33 @@ class OrdersController extends Controller
     {
         return $content
             ->header('查看订单')
-            ->body(view('admin.orders.show',['order' => $order]));
+            ->body(view('admin.orders.show', ['order' => $order]));
     }
 
     public function ship(Order $order, Request $request)
     {
         // 判断当前订单是否已支付
-        if (!$order->paid_at){
+        if ( !$order->paid_at) {
             throw new InvalidRequestException('订单未付款');
         }
         // 判断当前订单发货状态是否为未发货
-        if ($order->ship_status !== Order::SHIP_STATUS_PENDING){
+        if ($order->ship_status !== Order::SHIP_STATUS_PENDING) {
             throw new InvalidRequestException('订单已发货');
         }
         // Laravel 5.5 之后 validate 方法可以返回校验过的值
-        $data = $this->validate($request,[
+        $data = $this->validate($request, [
             'express_company' => ['required'],
             'express_no'      => ['required'],
-        ],[],[
-            'express_company' => '物流公司',
-            'express_no'      => '物流单号',
-        ]);
+        ], [], [
+                                    'express_company' => '物流公司',
+                                    'express_no'      => '物流单号',
+                                ]);
         // 将订单发货状态改为已发货，并存入物流信息
         $order->update([
-                            'ship_status' => Order::SHIP_STATUS_DELIVERED,
-                            // 我们在 Order 模型的 $casts 属性里指明了 ship_data 是一个数组
-                            // 因此这里可以直接把数组传过去
-                            'ship_data'   => $data,
+                           'ship_status' => Order::SHIP_STATUS_DELIVERED,
+                           // 我们在 Order 模型的 $casts 属性里指明了 ship_data 是一个数组
+                           // 因此这里可以直接把数组传过去
+                           'ship_data'   => $data,
                        ]);
 
         return redirect()->back();
@@ -74,7 +75,7 @@ class OrdersController extends Controller
     /**
      * Edit interface.
      *
-     * @param mixed   $id
+     * @param mixed $id
      * @param Content $content
      * @return Content
      */
@@ -113,28 +114,28 @@ class OrdersController extends Controller
 
         $grid->no('订单流水号');
         // 展示关联关系的字段时，使用 column 方法
-        $grid->column('user.name','买家');
+        $grid->column('user.name', '买家');
         $grid->total_amount('总金额')->sortable();
         $grid->paid_at('支付时间')->sortable();
-        $grid->ship_status('物流状态')->display(function ($value){
+        $grid->ship_status('物流状态')->display(function ($value) {
             return Order::$shipStatusMap[$value];
         });
-        $grid->refund_status('退款状态')->display(function ($value){
+        $grid->refund_status('退款状态')->display(function ($value) {
             return Order::$refundStatusMap[$value];
         });
 
         // 禁用创建按钮，后台不需要创建订单
         $grid->disableCreateButton();
-        $grid->actions(function ($actions){
+        $grid->actions(function ($actions) {
             // 禁用删除和编辑按钮
             $actions->disableDelete();
             $actions->disableEdit();
         });
-        $grid->tools(function ($tools){
+        $grid->tools(function ($tools) {
             //禁用批量删除按钮
-           $tools->batch(function ($batch){
-               $batch->disableDelete();
-           });
+            $tools->batch(function ($batch) {
+                $batch->disableDelete();
+            });
         });
 
         return $grid;
@@ -143,7 +144,7 @@ class OrdersController extends Controller
     /**
      * Make a show builder.
      *
-     * @param mixed   $id
+     * @param mixed $id
      * @return Show
      */
     protected function detail($id)
@@ -198,5 +199,54 @@ class OrdersController extends Controller
         $form->textarea('extra', 'Extra');
 
         return $form;
+    }
+
+    public function applyRefund(Order $order, ApplyRefundRequest $request)
+    {
+        // 校验订单是否属于当前用户
+        $this->authorize('own', $order);
+
+        // 判断订单是否已付款
+        if ( !$order->paid_at) {
+            throw new InvalidRequestException('该订单未支付，不能申请退款');
+        }
+        // 判断订单退款状态是否正确
+        if ($order->refund_status !== Order::REFUND_STATUS_PENDING) {
+            throw new InvalidRequestException('该订单已经申请过退款，请勿重复申请');
+        }
+        // 将用户输入的退款理由放到订单的 extra 字段中
+        $extra = $order->extra ?: [];
+        $extra['refund_reason'] = $request->input('reason');
+        // 将订单退款状态改为已申请退款
+        $order->update([
+                           'refund_status' => Order::REFUND_STATUS_APPLIED,
+                           'extra'         => $extra,
+                       ]);
+
+        return $order;
+    }
+
+    public function handleRefund(Order $order, HandleRefundRequest $request)
+    {
+        // 判断订单状态是否正确
+        if ($order->refund_status !== Order::REFUND_STATUS_APPLIED) {
+            throw new InvalidRequestException('订单状态不正确');
+        }
+        // 是否同意退款
+        if ($request->input('agree')) {
+            // 同意退款的逻辑这里先留空
+            // todo
+        } else {
+            // 将拒绝退款理由放到订单的 extra 字段中
+            $extra = $order->extra ?: [];
+            $extra['refund_disagree_reason'] = $request->input('reason');
+            // 将订单的退款状态改为未退款
+            $order->update([
+                               'refund_status' => Order::REFUND_STATUS_PENDING,
+                               'extra'         => $extra,
+                           ]);
+        }
+
+        return $order;
     }
 }
