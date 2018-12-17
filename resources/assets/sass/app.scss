@@ -330,6 +330,10 @@ body {
       font-weight: bolder;
     }
   }
+  .payment-buttons, .receive-button, .refund-button {
+    margin-top: 10px;
+    padding-right: 10px;
+  }
 }
 
 .orders-show-page {
