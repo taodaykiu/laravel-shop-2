@@ -8,6 +8,7 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 class Handler extends ExceptionHandler
 {
     /**
+     * 不需要记录在日志里
      * A list of the exception types that are not reported.
      *
      * @var array
@@ -15,6 +16,7 @@ class Handler extends ExceptionHandler
     protected $dontReport = [
         //
         InvalidRequestException::class,
+        CouponCodeUnavailableException::class,
     ];
 
     /**
