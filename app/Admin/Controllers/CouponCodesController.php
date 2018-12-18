@@ -145,7 +145,7 @@ class CouponCodesController extends Controller
         });
         $form->radio('type', '类型')->options(CouponCode::$typeMap)->rules('required');
         $form->text('value', '折扣')->rules(function ($form) {
-            if ($form->type === CouponCode::TYPE_PERCENT) {
+            if ($form->model()->type === CouponCode::TYPE_PERCENT) {
                 return 'required|numeric|between:1,99';
             } else {
                 return 'required|numeric|min:0.01';
@@ -153,9 +153,8 @@ class CouponCodesController extends Controller
         });
         $form->text('total', '总量')->rules('required|numeric|min:0');
         $form->text('min_amount', '最低金额')->rules(function ($form) {
-            if ($form->type === CouponCode::TYPE_FIXED) {
-                $minVal = $form->value + 0.01;
-                dd($minVal);
+            if ($form->model()->type === CouponCode::TYPE_FIXED) {
+                $minVal = $form->model()->value + 0.01;
                 return 'required|numeric|min:'.$minVal;
             } else {
                 return 'required|numeric|min:0';
